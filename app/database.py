@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from dotenv import load_dotenv
+from progress.bar import ChargingBar
 import os
 
 load_dotenv()
@@ -11,21 +12,22 @@ client = MongoClient(os.environ.get("MONGODB_CONNECTION_STRING"))
 
 
 def saveExams(exams):
-    print("Saving exams")
+    bar = ChargingBar('Saving exams', max=len(exams))
     for exam in exams:
-        print(exam)
-        client.db1.exams.update_one({"_id": exam['id']},
-                                    {"$set":
-                                     {
-                                         "id": exam['id'],
-                                         "name": exam["name"],
-                                         "year": exam["year"],
-                                         "cfu": exam["cfu"],
-                                         "frequency": exam["frequency"],
-                                         "mark": exam["mark"],
-                                         "date": exam["date"]
-                                     }
-                                     }, upsert=True)
+        client.university.exams.update_one({"_id": exam['id']},
+                                           {"$set":
+                                            {
+                                                "id": exam['id'],
+                                                "name": exam["name"],
+                                                "year": exam["year"],
+                                                "cfu": exam["cfu"],
+                                                "frequency": exam["frequency"],
+                                                "mark": exam["mark"],
+                                                "date": exam["date"]
+                                            }
+                                            }, upsert=True)
+        bar.next()
+    bar.finish()
     return {'message': 'Exams saved correctly.'}
 
 
