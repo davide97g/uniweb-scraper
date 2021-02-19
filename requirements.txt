@@ -1,0 +1,7 @@
+gunicorn
+requests
+flask 
+flask-cors
+selenium
+python-dotenv
+pymongo

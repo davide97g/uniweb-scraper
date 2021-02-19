@@ -1,16 +1,15 @@
 # https://shibidp.cca.unipd.it/idp/profile/SAML2/Redirect/SSO?execution=e1s2
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 import os
 import time
+from selenium import webdriver
+from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
+
 if __name__ == "__main__":
     from database import saveExams
-load_dotenv()
 
+# load environment variables
+load_dotenv()
 
 uniweb_username = os.environ.get("UNIWEB_USERNAME")
 uniweb_password = os.environ.get("UNIWEB_PASSWORD")
