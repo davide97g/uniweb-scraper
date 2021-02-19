@@ -5,3 +5,4 @@ flask-cors
 selenium
 python-dotenv
 pymongo
+progress
