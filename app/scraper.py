@@ -1,4 +1,4 @@
-# https://shibidp.cca.unipd.it/idp/profile/SAML2/Redirect/SSO?execution=e1s2
+# scraper.py
 import os
 import time
 from selenium import webdriver
@@ -34,7 +34,8 @@ else:
 driver.implicitly_wait(10)  # seconds
 
 
-def scrapeExams():
+# https://shibidp.cca.unipd.it/idp/profile/SAML2/Redirect/SSO?execution=e1s2
+def scrapeExamsList():
 
     # go to login
     driver.get(
@@ -105,7 +106,7 @@ def parseExamsData(exams_data):
 
 # ? local tests
 if __name__ == "__main__":
-    res = scrapeExams()
+    res = scrapeExamsList()
     if res.get("exams") is not None:
         exams = res.get("exams")
         if len(exams) > 0:

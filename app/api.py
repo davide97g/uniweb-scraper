@@ -1,15 +1,8 @@
 # api.py
-# ? here are contained all the API exposed by the webapp
 import flask
 from flask_cors import CORS, cross_origin
-
-
-if __name__ == "__main__":
-    from database import getExams, saveExams
-    from scraper import scrapeExams
-else:
-    from app.database import getExams, saveExams
-    from app.scraper import scrapeExams
+from app.database import getExams, saveExams
+from app.scraper import scrapeExamsList
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
@@ -21,7 +14,7 @@ CORS(app)
 @app.route('/exams/update', methods=['POST'])
 @cross_origin()
 def updateExams():
-    exams = scrapeExams()
+    exams = scrapeExamsList()
     return saveExams(exams)
 
 

@@ -1,3 +1,4 @@
+# database.py
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from progress.bar import ChargingBar
