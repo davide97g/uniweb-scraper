@@ -29,7 +29,7 @@ def saveExams(exams):
                                             }, upsert=True)
         bar.next()
     bar.finish()
-    return {'message': 'Exams saved correctly.'}
+    return {'message': 'Exams saved correctly.', 'data': exams}
 
 
 def getExams():

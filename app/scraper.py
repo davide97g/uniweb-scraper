@@ -19,10 +19,11 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
 chrome_options.add_argument("--disable-dev-shm-usage")
 chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("window-size=1980,960")
 
 
 if __name__ == "__main__":
-    # chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")
     driver = webdriver.Chrome(
         executable_path="../driver/chromedriver", options=chrome_options)
 else:
@@ -119,7 +120,6 @@ def scrapeExamsList(limit=10):
     # ? scraped raw data exams
     print("raw data exams scraped")
     raw_data_exams = raw_exams.split("\n")
-    print(raw_data_exams)
 
     driver.quit()
 
@@ -182,6 +182,6 @@ if __name__ == "__main__":
         if len(exams) > 0:
             print(f"Downloaded {len(exams)} exams")
             print(exams)
-            # saveExams(exams)
+            print(saveExams(exams))
     else:
         print("No exams downloaded.")
