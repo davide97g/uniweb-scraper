@@ -34,8 +34,17 @@ else:
 driver.implicitly_wait(10)  # seconds
 
 
+def login():
+    print("login...")
+    driver.find_element_by_id("j_username_js").send_keys(uniweb_username)
+    driver.find_element_by_id("password").send_keys(uniweb_password)
+    driver.find_element_by_id("radio2").click()
+    driver.find_element_by_id("login_button_js").click()
+
 # https://shibidp.cca.unipd.it/idp/profile/SAML2/Redirect/SSO?execution=e1s2
-def scrapeExamsList():
+
+
+def scrapeExamsList(limit=10):
 
     # go to login
     driver.get(
@@ -44,27 +53,87 @@ def scrapeExamsList():
     driver.find_element_by_id("hamburger").click()
     time.sleep(0.1)
     driver.find_element_by_id("menu_link-navbox_account_auth/Logon").click()
-
-    driver.find_element_by_id("j_username_js").send_keys(uniweb_username)
-    driver.find_element_by_id("password").send_keys(uniweb_password)
-    driver.find_element_by_id("radio2").click()
-    driver.find_element_by_id("login_button_js").click()
-
-    driver.find_element_by_id("gu_toolbar_sceltacarriera").click()
     time.sleep(0.5)
+    test = 0
+    while "shibidp" in driver.current_url and test < limit:
+        login()
+        time.sleep(1)
+        test += 1
+        print(f"{test} attempts to login")
 
-    driver.get("https://uniweb.unipd.it/auth/studente/Libretto/LibrettoHome.do?menu_opened_cod=menu_link-navbox_studenti_Home")
-    time.sleep(0.5)
-    raw_exams = driver.find_element_by_id("tableLibretto").text
+    if "shibidp" in driver.current_url or test == limit:
+        print("error: login failed")
+        return {'error': 'login failed'}
+
+    print("logged")
+
+    # ? choice
+    career_button = None  # crude initialization
+    test = 0
+    while not career_button and test < limit:
+        career_choice_table = driver.find_element_by_id(
+            "gu_table_sceltacarriera")
+        if career_choice_table:
+            career_links = career_choice_table.find_elements_by_tag_name("a")
+            if career_links and len(career_links) > 0:
+                career_button = career_links[0]  # take the first link
+        time.sleep(1)
+        test += 1
+        print(f"{test} attempts to choose career")
+
+    if not career_button or test == limit:
+        print("error: career choice failed")
+        return {'error': 'career choice failed'}
+
+    # choice done
+    career_button.click()
+    print("choice done")
+    time.sleep(1)
+
+    driver.get(
+        "https://uniweb.unipd.it/auth/studente/Libretto/LibrettoHome.do?menu_opened_cod=menu_link-navbox_studenti_Home")
+
+    # ? wait to be in the right page
+    # while "Libretto" not in driver.find_element_by_tag_name("body").text:
+    #     print("still not in Libretto online page...")
+    #     time.sleep(1)
+    #     driver.get(
+    #         "https://uniweb.unipd.it/auth/studente/Libretto/LibrettoHome.do?menu_opened_cod=menu_link-navbox_studenti_Home")
+    #     print(driver.find_element_by_tag_name("body").text)
+
+    # ? get raw data for exams
+    test = 0
+    raw_exams = None  # crude initialization
+    while not raw_exams and test < limit:
+        tableLibretto = driver.find_element_by_id("tableLibretto")
+        if tableLibretto:
+            raw_exams = tableLibretto.text
+        time.sleep(1)
+        test += 1
+        print(f"{test} attempts to get raw exams data")
+
+    if not raw_exams or test == limit:
+        print("error: exam data scraping failed")
+        return {"error": "exam data scraping failed"}
+
+    # ? scraped raw data exams
+    print("raw data exams scraped")
     raw_data_exams = raw_exams.split("\n")
+    print(raw_data_exams)
 
     driver.quit()
 
     if not raw_data_exams:
-        return {'error': 'Scraping failed'}
+        print("error: scraping failed")
+        return {'error': 'scraping failed'}
     else:
         exams = parseExamsData(raw_data_exams)
-        return {'exams': exams}
+        if not exams:
+            print("error: parsing failed")
+            return {'error': 'parsing failed'}
+        else:
+            print("parsing complete")
+            return {'exams': exams}
 
 # ? mock data
 # exams_data = ['Attività didattica', 'Anno di corso', 'CFU', 'Stato', 'Frequenza', 'Voto - Data Esame', 'Ric.', 'Prove Appelli', 'SCP7079405 - BIOINFORMATICS', '0 6  ', 'SCP8084903 - INTRODUCTION TO MOLECULAR BIOLOGY', '0 6  ', 'SCP7079257 - ALGORITHMIC METHODS AND MACHINE LEARNING', '1 12 2019/2020 30 - 24/07/2020', 'SCP7079297 - BIG DATA COMPUTING', '1 6 2019/2020', 'SCP7079317 - BIOINFORMATICS AND COMPUTATIONAL BIOLOGY', '1 6 2019/2020', 'SCP7079219 - COGNITIVE, BEHAVIORAL AND SOCIAL DATA', '1 6 2019/2020 30 - 27/01/2020', 'SCP9087561 - DEEP LEARNING', '1 6 2019/2020', 'SCP7078720 - FUNDAMENTALS OF INFORMATION SYSTEMS',
@@ -72,6 +141,7 @@ def scrapeExamsList():
 
 
 def parseExamsData(exams_data):
+    print("parsing exams data")
     exams_list = []
     columns = ['id', 'name', 'year', 'cfu', 'frequency', 'mark', 'date']
     for i in range(8, len(exams_data[8:]), 2):
@@ -112,6 +182,6 @@ if __name__ == "__main__":
         if len(exams) > 0:
             print(f"Downloaded {len(exams)} exams")
             print(exams)
-            saveExams(exams)
+            # saveExams(exams)
     else:
         print("No exams downloaded.")
