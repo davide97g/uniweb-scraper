@@ -18,7 +18,7 @@ def updateExamsRegistered():
     uniweb_password = request.json.get("uniweb_password")
     res = scrapeExams(uniweb_password, True)
     if 'exams' in res:
-        return saveExamsRegistered(exams)
+        return saveExamsRegistered(res.get("exams"))
     elif 'error' in res:
         return res['error']
     else:
@@ -37,7 +37,7 @@ def updateExamsResults():
     uniweb_password = request.json.get("uniweb_password")
     res = scrapeExams(uniweb_password, False)
     if 'exams' in res:
-        return saveExamsResults(exams)
+        return saveExamsResults(res.get("exams"))
     elif 'error' in res:
         return res['error']
     else:
