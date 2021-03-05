@@ -12,7 +12,7 @@ app.config['CORS_HEADERS'] = 'Content-Type'
 CORS(app)
 
 
-@app.route('/exams/registered/update', methods=['POST'])
+@app.route('/exams-registered/update', methods=['POST'])
 @cross_origin()
 def updateExamsRegistered():
     uniweb_password = request.json.get("uniweb_password")
@@ -25,13 +25,13 @@ def updateExamsRegistered():
         return "An error occured."
 
 
-@app.route('/exams/registered', methods=['GET'])
+@app.route('/exams-registered', methods=['GET'])
 @cross_origin()
 def exams():
     return getExamsRegistered()
 
 
-@app.route('/exams/results/update', methods=['POST'])
+@app.route('/exams-results/update', methods=['POST'])
 @cross_origin()
 def updateExamsResults():
     uniweb_password = request.json.get("uniweb_password")
@@ -44,7 +44,7 @@ def updateExamsResults():
         return "An error occured."
 
 
-@app.route('/exams/results', methods=['GET'])
+@app.route('/exams-results', methods=['GET'])
 @cross_origin()
 def exams():
     return getExamsResults()
