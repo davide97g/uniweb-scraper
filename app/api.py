@@ -2,7 +2,7 @@
 import flask
 from flask import request
 from flask_cors import CORS, cross_origin
-from app.database import getExamsRegistered, getExamsResults, saveExams
+from app.database import getExamsRegistered, getExamsResults, saveExamsRegistered, saveExamsResults
 from app.scraper import scrapeExams
 
 app = flask.Flask(__name__)
@@ -18,7 +18,7 @@ def updateExamsRegistered():
     uniweb_password = request.json.get("uniweb_password")
     res = scrapeExams(uniweb_password, True)
     if 'exams' in res:
-        return saveExams(exams)
+        return saveExamsRegistered(exams)
     elif 'error' in res:
         return res['error']
     else:
@@ -37,7 +37,7 @@ def updateExamsResults():
     uniweb_password = request.json.get("uniweb_password")
     res = scrapeExams(uniweb_password, False)
     if 'exams' in res:
-        return saveExams(exams)
+        return saveExamsResults(exams)
     elif 'error' in res:
         return res['error']
     else:
