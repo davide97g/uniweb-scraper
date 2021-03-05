@@ -6,7 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from dotenv import load_dotenv
 
 if __name__ == "__main__":
-    from database import saveExams
+    from database import saveExamsRegistered
 
 # load environment variables
 load_dotenv()
@@ -45,8 +45,11 @@ def login():
 # https://shibidp.cca.unipd.it/idp/profile/SAML2/Redirect/SSO?execution=e1s2
 
 
-def scrapeExamsList(limit=10):
-
+def scrapeExamsRegistered(input_password, limit=10):
+    if input_password != uniweb_password:
+        return {'error': 'Password not correct.'}
+    else:
+        print("Password is correct")
     # go to login
     driver.get(
         "https://uniweb.unipd.it/Home.do")
@@ -176,12 +179,12 @@ def parseExamsData(exams_data):
 
 # ? local tests
 if __name__ == "__main__":
-    res = scrapeExamsList()
-    if res.get("exams") is not None:
+    res = scrapeExamsRegistered("wrong password")
+    if "exams" in res:
         exams = res.get("exams")
         if len(exams) > 0:
             print(f"Downloaded {len(exams)} exams")
             print(exams)
-            print(saveExams(exams))
-    else:
-        print("No exams downloaded.")
+            print(saveExamsRegistered(exams))
+    elif "error" in res:
+        print(res.get("error"))
