@@ -47,16 +47,15 @@ def saveExamsResults(exams):
     bar = ChargingBar('Saving exams results', max=len(exams))
     for exam in exams:
         # todo: check different data to save
-        client.university.exams_results.update_one({"_id": exam['id']},
+        client.university.exams_results.update_one({"_id": exam['code']},
                                                    {"$set":
                                                     {
-                                                        "id": exam['id'],
+                                                        "id": exam['code'],
                                                         "name": exam["name"],
-                                                        "year": exam["year"],
-                                                        "cfu": exam["cfu"],
-                                                        "frequency": exam["frequency"],
-                                                        "mark": exam["mark"],
-                                                        "date": exam["date"]
+                                                        "date": exam["date"],
+                                                        "hour": exam["hour"],
+                                                        "date_last_reject": exam["date_last_reject"],
+                                                        "mark": exam["mark"]
                                                     }
                                                     }, upsert=True)
         bar.next()
@@ -72,5 +71,5 @@ def getExamsResults():
 
 
 if __name__ == "__main__":
-    for e in getExamsRegistered()['exams']:
+    for e in getExamsResults()['exams']:
         print(e)

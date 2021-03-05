@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 if __name__ == "__main__":
     from database import saveExamsRegistered
+    from database import saveExamsResults
 
 # load environment variables
 load_dotenv()
@@ -42,35 +43,8 @@ def login():
     driver.find_element_by_id("radio2").click()
     driver.find_element_by_id("login_button_js").click()
 
-# https://shibidp.cca.unipd.it/idp/profile/SAML2/Redirect/SSO?execution=e1s2
 
-
-def scrapeExamsRegistered(input_password, limit=10):
-    if input_password != uniweb_password:
-        return {'error': 'Password not correct.'}
-    else:
-        print("Password is correct")
-    # go to login
-    driver.get(
-        "https://uniweb.unipd.it/Home.do")
-
-    driver.find_element_by_id("hamburger").click()
-    time.sleep(0.1)
-    driver.find_element_by_id("menu_link-navbox_account_auth/Logon").click()
-    time.sleep(0.5)
-    test = 0
-    while "shibidp" in driver.current_url and test < limit:
-        login()
-        time.sleep(1)
-        test += 1
-        print(f"{test} attempts to login")
-
-    if "shibidp" in driver.current_url or test == limit:
-        print("error: login failed")
-        return {'error': 'login failed'}
-
-    print("logged")
-
+def career_choice(limit=10):
     # ? choice
     career_button = None  # crude initialization
     test = 0
@@ -87,13 +61,15 @@ def scrapeExamsRegistered(input_password, limit=10):
 
     if not career_button or test == limit:
         print("error: career choice failed")
-        return {'error': 'career choice failed'}
+        return {'error': 'career choice failed.'}
+    else:
+        career_button.click()
+        return {'success': 'career choice done.'}
 
-    # choice done
-    career_button.click()
-    print("choice done")
-    time.sleep(1)
+# https://shibidp.cca.unipd.it/idp/profile/SAML2/Redirect/SSO?execution=e1s2
 
+
+def extractRawDataExamsRegistered(limit=10):
     driver.get(
         "https://uniweb.unipd.it/auth/studente/Libretto/LibrettoHome.do?menu_opened_cod=menu_link-navbox_studenti_Home")
 
@@ -117,33 +93,19 @@ def scrapeExamsRegistered(input_password, limit=10):
         print(f"{test} attempts to get raw exams data")
 
     if not raw_exams or test == limit:
-        print("error: exam data scraping failed")
         return {"error": "exam data scraping failed"}
 
     # ? scraped raw data exams
-    print("raw data exams scraped")
     raw_data_exams = raw_exams.split("\n")
-
-    driver.quit()
-
-    if not raw_data_exams:
-        print("error: scraping failed")
-        return {'error': 'scraping failed'}
+    if raw_data_exams:
+        return {
+            'success': "Raw data registered exams scraped.",
+            'data': raw_data_exams}
     else:
-        exams = parseExamsData(raw_data_exams)
-        if not exams:
-            print("error: parsing failed")
-            return {'error': 'parsing failed'}
-        else:
-            print("parsing complete")
-            return {'exams': exams}
-
-# ? mock data
-# exams_data = ['Attività didattica', 'Anno di corso', 'CFU', 'Stato', 'Frequenza', 'Voto - Data Esame', 'Ric.', 'Prove Appelli', 'SCP7079405 - BIOINFORMATICS', '0 6  ', 'SCP8084903 - INTRODUCTION TO MOLECULAR BIOLOGY', '0 6  ', 'SCP7079257 - ALGORITHMIC METHODS AND MACHINE LEARNING', '1 12 2019/2020 30 - 24/07/2020', 'SCP7079297 - BIG DATA COMPUTING', '1 6 2019/2020', 'SCP7079317 - BIOINFORMATICS AND COMPUTATIONAL BIOLOGY', '1 6 2019/2020', 'SCP7079219 - COGNITIVE, BEHAVIORAL AND SOCIAL DATA', '1 6 2019/2020 30 - 27/01/2020', 'SCP9087561 - DEEP LEARNING', '1 6 2019/2020', 'SCP7078720 - FUNDAMENTALS OF INFORMATION SYSTEMS',
-#               '1 12 2019/2020 30L - 10/09/2020', 'SCP7079397 - HUMAN DATA ANALYTICS', '1 6 2019/2020', 'SCP7079229 - OPTIMIZATION FOR DATA SCIENCE', '1 6 2019/2020', 'SCP7079226 - STATISTICAL LEARNING (C.I.)', '1 12 2019/2020', 'SCP7079197 - STOCHASTIC METHODS', '1 6 2019/2020', 'SCP7079278 - STRUCTURAL BIOINFORMATICS', '1 6 2019/2020', 'SCP9087563 - VISION AND COGNITIVE SERVICES', '1 6 2019/2020', 'SCP7079337 - BIOLOGICAL DATA', '2 6 2020/2021', 'SCP7079231 - BUSINESS ECONOMIC AND FINANCIAL DATA', '2 6 2020/2021', 'SCP7079319 - FINAL EXAMINATION', '2 15 2020/2021', 'SCP7079232 - STAGE', '2 15 2020/2021']
+        return {'error': 'Raw data scraping failed.'}
 
 
-def parseExamsData(exams_data):
+def parseExamsRegisteredData(exams_data):
     print("parsing exams data")
     exams_list = []
     columns = ['id', 'name', 'year', 'cfu', 'frequency', 'mark', 'date']
@@ -177,14 +139,127 @@ def parseExamsData(exams_data):
     return exams
 
 
+def extractRawDataExamsResults(limit=10):
+    driver.get(
+        "https://uniweb.unipd.it/auth/studente/Appelli/BachecaEsiti.do?menu_opened_cod=menu_link-navbox_studenti_Home")
+    tables = driver.find_elements_by_tag_name("table")
+    if tables and len(tables) == 2:
+        # choose the table with less text
+        table = tables[0]
+        if len(tables[0].text) > len(tables[1].text):
+            table = tables[1]
+        return {'success': "Extracted raw data exams results.", 'data': table.text.split("\n")}
+    else:
+        return {'error': "Exams results => table not found."}
+
+
+def parseExamsResultsData(exams_data):
+    exams = []
+    print(exams_data)
+    print(len(exams_data))
+    print(int(len(exams_data)/5))
+    for i in range(int(len(exams_data)/5)):
+        name, code, _ = exams_data[i].split(" - ")
+        date = exams_data[i+2].split(" ")[0]
+        hour = exams_data[i+2].split(" ")[1]
+        date_last_reject = exams_data[i+3]
+        mark = exams_data[i+4]
+        exams.append({
+            'name': name,
+            'code': code.replace("[", "").replace("]", ""),
+            'date': date,
+            'hour': hour,
+            'date_last_reject': date_last_reject,
+            'mark': mark
+        })
+    return {'exams': exams}
+
+
+def scrapeExams(input_password, registered=True, limit=10):
+    if input_password != uniweb_password:
+        return {'error': 'Password not correct.'}
+    else:
+        print("Password is correct")
+    # go to login
+    driver.get(
+        "https://uniweb.unipd.it/Home.do")
+
+    driver.find_element_by_id("hamburger").click()
+    time.sleep(0.1)
+    driver.find_element_by_id("menu_link-navbox_account_auth/Logon").click()
+    time.sleep(0.5)
+    test = 0
+    while "shibidp" in driver.current_url and test < limit:
+        login()
+        time.sleep(1)
+        test += 1
+        print(f"{test} attempts to login")
+
+    if "shibidp" in driver.current_url or test == limit:
+        print("error: login failed")
+        return {'error': 'login failed'}
+
+    print("logged")
+
+    # ? choice
+    res = career_choice(limit)
+    if 'success' in res:
+        print(res.get("success"))
+    elif 'error' in res:
+        return res
+    else:
+        return {"error": "An error occurred during the career choice."}
+
+    time.sleep(1)
+
+    if registered:
+
+        res = extractRawDataExamsRegistered(limit)
+
+        driver.quit()
+
+        if 'error' in res:
+            return res
+        elif 'success' in res:
+            print(res.get("success"))
+
+        raw_data_exams = res.get("data")
+
+        exams = parseExamsRegisteredData(raw_data_exams)
+        if not exams:
+            print("error: parsing failed")
+            return {'error': 'parsing failed'}
+        else:
+            print("parsing complete")
+            return {'exams': exams}
+    else:
+
+        res = extractRawDataExamsResults(limit)
+
+        driver.quit()
+
+        if 'error' in res:
+            return res
+        elif 'success' in res:
+            return parseExamsResultsData(res.get("data"))
+        else:
+            return {"error": "An error occurred while scraping exams results."}
+
+
 # ? local tests
 if __name__ == "__main__":
-    res = scrapeExamsRegistered("wrong password")
+    registered = False
+    res = scrapeExams(uniweb_password, registered)
     if "exams" in res:
         exams = res.get("exams")
         if len(exams) > 0:
             print(f"Downloaded {len(exams)} exams")
             print(exams)
-            print(saveExamsRegistered(exams))
+            if registered:
+                print(saveExamsRegistered(exams))
+            else:
+                print(saveExamsResults(exams))
     elif "error" in res:
         print(res.get("error"))
+    else:
+        print("An error occurred.")
