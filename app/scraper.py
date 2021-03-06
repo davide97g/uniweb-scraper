@@ -83,49 +83,58 @@ def extractRawDataExamsRegistered(limit=10):
 
     # ? get raw data for exams
     test = 0
-    raw_exams = None  # crude initialization
-    while not raw_exams and test < limit:
+    # raw_exams = None  # crude initialization
+    exam_data = None  # cleaned data
+    while not exam_data and test < limit:
         tableLibretto = driver.find_element_by_id("tableLibretto")
         if tableLibretto:
-            raw_exams = tableLibretto.text
+            # raw_exams = tableLibretto.text
+            exam_data = []
+            table_body = tableLibretto.find_elements_by_tag_name("tbody")[0]
+            rows = table_body.find_elements_by_tag_name("tr")
+            for row in rows:
+                links = row.find_elements_by_tag_name("a")
+                if len(links) == 3:
+                    exam_data.append(row.text)
         time.sleep(1)
         test += 1
         print(f"{test} attempts to get raw exams data")
 
-    if not raw_exams or test == limit:
-        return {"error": "exam data scraping failed"}
+    if not exam_data or test == limit:
+        return {"error": "Exam data scraping failed"}
 
     # ? scraped raw data exams
-    raw_data_exams = raw_exams.split("\n")
-    if raw_data_exams:
+    if exam_data:
         return {
             'success': "Raw data registered exams scraped.",
-            'data': raw_data_exams}
+            'data': exam_data}
     else:
         return {'error': 'Raw data scraping failed.'}
 
 
 def parseExamsRegisteredData(exams_data):
-    print("parsing exams data")
     exams_list = []
     columns = ['id', 'name', 'year', 'cfu', 'frequency', 'mark', 'date']
-    for i in range(8, len(exams_data[8:]), 2):
-        exam_id, exam_name = exams_data[i].split("-")
+    for exam in exams_data:
+        exam_id, exam_name, exam_year, exam_cfu, exam_frequency, exam_mark, exam_date = [
+            None, None, None, None, None, None, None]
+
+        identification, data = exam.split("\n")
+
+        exam_id, exam_name = identification.split(" - ")
         exam_id = exam_id.replace(" ", "")
         exam_name = exam_name.lstrip(" ")
-        exam_data = exams_data[i+1].split(" ")
-        exam_data = [x for x in exam_data if x != '-']
-        exam_year = exam_data[0]
-        exam_cfu = exam_data[1]
-        exam_frequency = exam_data[2]
-        if len(exam_data) > 3:
-            exam_mark = exam_data[3]
+
+        data = data.replace(" - ", " ")
+        split = data.split(" ")
+        if len(split) == 5:
+            exam_year, exam_cfu, exam_frequency, exam_mark, exam_date = split
+        elif len(split) == 3:
+            exam_year, exam_cfu, exam_frequency = split
+        elif len(split) == 2:
+            exam_year, exam_cfu = split
         else:
-            exam_mark = ''
-        if len(exam_data) == 5:
-            exam_date = exam_data[4]
-        else:
-            exam_date = ''
+            continue
         exams_list.append([exam_id, exam_name, exam_year, exam_cfu,
                            exam_frequency, exam_mark, exam_date])
 
@@ -133,6 +142,7 @@ def parseExamsRegisteredData(exams_data):
     for e in exams_list:
         sample = {}
         for i in range(len(columns)):
+            # if e[i] is not None:
             sample[columns[i]] = e[i]
         exams.append(sample)
 
@@ -223,9 +233,7 @@ def scrapeExams(input_password, registered=True, limit=10):
         elif 'success' in res:
             print(res.get("success"))
 
-        raw_data_exams = res.get("data")
-
-        exams = parseExamsRegisteredData(raw_data_exams)
+        exams = parseExamsRegisteredData(res.get("data"))
         if not exams:
             print("error: parsing failed")
             return {'error': 'parsing failed'}
@@ -248,7 +256,7 @@ def scrapeExams(input_password, registered=True, limit=10):
 
 # ? local tests
 if __name__ == "__main__":
-    registered = False
+    registered = True
     res = scrapeExams(uniweb_password, registered)
     if "exams" in res:
         exams = res.get("exams")
@@ -263,3 +271,4 @@ if __name__ == "__main__":
         print(res.get("error"))
     else:
         print("An error occurred.")
+    # print(parseExamsRegisteredData(mock))
